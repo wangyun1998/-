@@ -169,22 +169,20 @@ async function onMessage(msg: Message) {
   };
 
   // xx
-  if (/^#涩涩/.test(msg.text()) && (topic == "前端加班努力群" || topic == "技术+健身攻关小组")
-    && msg.self()
-  ) {
-    let text = msg.text().split("#涩涩")[1];
-    let data: any;
-    if (text) {
-      data = await r18Img(encodeURI(text));
-    } else {
-      data = await r18Img(encodeURI(""));
-    }
-    if (data instanceof Object) {
-      await msg.say(FileBox.fromUrl(data.urls.original));
-    } else {
-      await msg.say(data);
-    }
-  };
+//   if (/^#涩涩/.test(msg.text())) {
+//     let text = msg.text().split("#涩涩")[1];
+//     let data: any;
+//     if (text) {
+//       data = await r18Img(encodeURI(text));
+//     } else {
+//       data = await r18Img(encodeURI(""));
+//     }
+//     if (data instanceof Object) {
+//       await msg.say(FileBox.fromUrl(data.urls.original));
+//     } else {
+//       await msg.say(data);
+//     }
+//   };
 
   // 舔狗语录
   if (/^#舔狗$/.test(msg.text())) {
@@ -469,9 +467,7 @@ async function onMessage(msg: Message) {
   }
 
   // 福利视频
-  if (
-    /^#福利视频$/.test(msg.text()) && msg.self()
-  ) {
+  if ( /^#福利视频$/.test(msg.text())) {
     let data = await getVideo();
     await msg.say(`http://${data as string}`);
   }
@@ -556,10 +552,7 @@ async function onMessage(msg: Message) {
   }
 
   // 福利图片
-  if (
-    /^#福利图$/.test(msg.text()) && (topic == "前端加班努力群" || topic == "技术+健身攻关小组")
-    && msg.self()
-  ) {
+  if (/^#福利图$/.test(msg.text())) {
     let data = await welfarePage();
     await msg.say(FileBox.fromUrl(data as string));
   }
@@ -604,12 +597,12 @@ async function onMessage(msg: Message) {
   }
 
   // 关键词邀请进群
-  if (/^#前端技术交流群$/.test(msg.text()) && !msg.self()) {
+  if (/^#群名$/.test(msg.text()) && !msg.self()) {
     let contact: any = await bot.Contact.find({
       name: msg.talker()?.payload?.name
     });
     let room: any = await bot.Room.find({
-      topic: "前端技术交流"
+      topic: "群名"
     });
     if (room) {
       try {
@@ -622,14 +615,14 @@ async function onMessage(msg: Message) {
   }
 
   // 主动拉进群
-  if (msg.text().indexOf("邀请") > -1 && msg.self() && topic == "前端技术交流") {
+  if (msg.text().indexOf("邀请") > -1 && msg.self() && topic == "群名") {
     let contact = await bot.Contact.find({
       name: msg.text().split("邀请")[1]
     }) || await bot.Contact.find({
       alias: msg.text().split("邀请")[1]
     });
     let room: any = await bot.Room.find({
-      topic: "前端技术交流"
+      topic: "群名"
     });
     if (room) {
       try {
@@ -644,7 +637,7 @@ async function onMessage(msg: Message) {
   // 修改群名
   if (
     room &&
-    room?.payload?.topic == "前端技术交流" &&
+    room?.payload?.topic == "群名" &&
     /^修改群名/.test(msg.text())
   ) {
     await room.topic(msg.text().split("修改群名")[1] as string);
@@ -660,7 +653,7 @@ async function onMessage(msg: Message) {
       msg.say("微信机器人已关闭");
     }
   }
-  if (bootOpen && msg.text() != "" && !msg.self() && topic == "前端加班努力群") {
+  if (bootOpen && msg.text() != "" && !msg.self()) {
     let data = await robotSay(encodeURI(msg.text()));
     await msg.say(data as string);
   } else {
