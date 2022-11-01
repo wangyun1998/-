@@ -16,11 +16,8 @@ import {
   tongueTwister,
   callSB,
   hotWords,
-  welfarePage,
-  buyerShow,
   dailyWeather,
   getCalendar,
-  getVideo,
   sendEmails,
   poetryQuestion,
   emotionalQuotation,
@@ -37,8 +34,7 @@ import {
   lanternRiddles,
   rainbowFart,
   epidemicSituation,
-  flattererDog,
-  r18Img
+  flattererDog
 } from "./txApi.js";
 
 // 控制机器人开关
@@ -142,10 +138,6 @@ async function onMessage(msg: Message) {
       "舔狗"
     ],
       helpStr = "";
-    if (topic == "前端加班努力群" || topic == "技术+健身攻关小组") {
-      // "福利视频", 
-      // apiList.push("福利图", "买家秀", "涩涩");
-    }
     for (let i = 0, leng = apiList.length; i < leng; i++) {
       helpStr += `${i + 1}、${apiList[i]}，命令：#${apiList[i] == "天气"
         ? apiList[i] + "(周)城市名"
@@ -158,6 +150,7 @@ async function onMessage(msg: Message) {
     await msg.say(helpStr);
   }
 
+  // 骂人
   if (/鞭策/.test(msg.text())) {
     let data;
     if (msg.text().indexOf("重点")) {
@@ -168,21 +161,6 @@ async function onMessage(msg: Message) {
     await msg.say(data as string);
   };
 
-  // xx
-//   if (/^#涩涩/.test(msg.text())) {
-//     let text = msg.text().split("#涩涩")[1];
-//     let data: any;
-//     if (text) {
-//       data = await r18Img(encodeURI(text));
-//     } else {
-//       data = await r18Img(encodeURI(""));
-//     }
-//     if (data instanceof Object) {
-//       await msg.say(FileBox.fromUrl(data.urls.original));
-//     } else {
-//       await msg.say(data);
-//     }
-//   };
 
   // 舔狗语录
   if (/^#舔狗$/.test(msg.text())) {
@@ -466,12 +444,6 @@ async function onMessage(msg: Message) {
     }
   }
 
-  // 福利视频
-  if ( /^#福利视频$/.test(msg.text())) {
-    let data = await getVideo();
-    await msg.say(`http://${data as string}`);
-  }
-
   // 摸鱼人日历
   if (/^#日历$/.test(msg.text())) {
     let data = await getCalendar();
@@ -550,23 +522,11 @@ async function onMessage(msg: Message) {
       }
     }
   }
-
-  // 福利图片
-  if (/^#福利图$/.test(msg.text())) {
-    let data = await welfarePage();
-    await msg.say(FileBox.fromUrl(data as string));
-  }
-
+  
   // 英语
   if (/^#英语$/i.test(msg.text())) {
     let data = await dateEnglish();
     await msg.say(data as string);
-  }
-
-  // 买家秀
-  if (/^#买家秀$/.test(msg.text()) && (topic == "前端加班努力群" || topic == "技术+健身攻关小组") && msg.self()) {
-    let data = await buyerShow();
-    await msg.say(FileBox.fromUrl(data as string));
   }
 
   // 发送邮件

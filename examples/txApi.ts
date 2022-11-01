@@ -147,42 +147,6 @@ const hotWords = function (params: any) {
   });
 };
 
-// 福利图
-const welfarePage = function () {
-  return new Promise((resolve, _reject) => {
-    let url = "https://api.vvhan.com/api/girl?type=json";
-    request.get(url, function (err: any, _res: any, body: any) {
-      if (err) {
-        resolve("福利图请求出错");
-        return;
-      }
-      let data = JSON.parse(body);
-      if (data.success) {
-        resolve(data.imgurl);
-      }
-    });
-  });
-};
-
-// 买家秀
-const buyerShow = function () {
-  return new Promise((resolve, _reject) => {
-    request.get(
-      {
-        encoding: null,
-        url: "https://api.vvhan.com/api/tao"
-      },
-      function (err: any, res: any, _body: any) {
-        if (err) {
-          resolve("买家秀请求出错");
-          return;
-        }
-        resolve(res.request.uri.href);
-      }
-    );
-  });
-};
-
 // 每日天气
 const dailyWeather = function (params: string) {
   return new Promise((resolve, _reject) => {
@@ -211,25 +175,6 @@ const getCalendar = function () {
           return;
         } else {
           resolve(res.request.uri.href);
-        }
-      }
-    );
-  });
-};
-
-// 小姐姐视频
-const getVideo = function () {
-  return new Promise((resolve, _reject) => {
-    request.get(
-      "https://tucdn.wpon.cn/api-girl/index.php?wpon=url",
-      function (err: any, _res: any, body: any) {
-        console.log(body);
-        if (err) {
-          console.log(err);
-          resolve("视频请求出错");
-          return;
-        } else {
-          resolve(body.split("\n")[body.split("\n").length - 1].split("//")[1]);
         }
       }
     );
@@ -562,26 +507,6 @@ const flattererDog = function () {
   });
 };
 
-// x图
-const r18Img = function (params: string) {
-  return new Promise((resolve, _reject) => {
-    let url = `https://api.lolicon.app/setu/v2?r18=1${params ? "&tag=" + params : ""}`;
-
-    request.get(url, function (error: any, _response: any, body: any) {
-      if (error) {
-        resolve("x图请求出错");
-        return;
-      }
-      let data = JSON.parse(body);
-      if (data.error == "") {
-        resolve(data.data[0]);
-      } else {
-        resolve("不好意思,后台有点小问题...请联系管理员处理");
-      }
-    });
-  });
-};
-
 export {
   godReplies,
   dateEnglish,
@@ -590,11 +515,8 @@ export {
   tongueTwister,
   callSB,
   hotWords,
-  welfarePage,
-  buyerShow,
   dailyWeather,
-  getCalendar,
-  getVideo,
+  getCalendar
   sendEmails,
   poetryQuestion,
   emotionalQuotation,
@@ -611,6 +533,5 @@ export {
   lanternRiddles,
   rainbowFart,
   epidemicSituation,
-  flattererDog,
-  r18Img
+  flattererDog
 };
