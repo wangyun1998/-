@@ -87,7 +87,7 @@ async function onTiming(name: string, time: string) {
     (await bot.Contact.find({ name })) || await bot.Contact.find({ alias: name });
   schedule.scheduleJob(contact.payload.id, time, () => {
     try {
-      contact.say("到点检查域名啦...");
+      contact.say("要说的话");
     } catch (err) {
       console.log(err);
     }
@@ -106,27 +106,7 @@ async function onMessage(msg: Message) {
 
   // 开启定时任务
   if (/^#开启任务$/.test(msg.text()) && msg.self()) {
-    onTiming("小花", "0 30 9 * * *");
-    onTiming("楚燕", "0 50 9 * * *");
-    onTiming("奕键哥", "0 10 10 * * *");
-    onTiming("惠鹏", "0 50 10 * * *");
-    onTiming("泽腾哥", "0 10 11 * * *");
-    onTiming("淑敏", "0 30 11 * * *");
-    onTiming("小花", "0 50 11 * * *");
-    onTiming("楚燕", "0 10 12 * * *");
-    onTiming("奕键哥", "0 50 13 * * *");
-    onTiming("泽腾哥", "0 30 14 * * *");
-    onTiming("惠鹏", "0 50 14 * * *");
-    onTiming("淑敏", "0 10 15 * * *");
-    onTiming("小花", "0 30 15 * * *");
-    onTiming("楚燕", "0 50 15 * * *");
-    onTiming("奕键哥", "0 10 16 * * *");
-    onTiming("泽腾哥", "0 50 16 * * *");
-    onTiming("惠鹏", "0 10 17 * * *");
-    onTiming("淑敏", "0 30 17 * * *");
-    onTiming("小花", "0 50 17 * * *");
-    onTiming("楚燕", "0 10 18 * * *");
-    onTiming("奕键哥", "0 30 18 * * *");
+    onTiming("好友名", "0 30 9 * * *");//秒 分 时 周 月 年
   }
 
   // 撤回的消息
