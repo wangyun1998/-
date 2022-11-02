@@ -1,5 +1,33 @@
 // @ts-ignore
 import request from "request";
+import fs from "fs";
+import download from 'download';
+
+// 下载文件
+async function downloadFile(url: string, filename: string, res: any) {
+  await download(encodeURI(url), "./file", { filename });
+  await fs.readFile(`./file/${filename}`, (err, _data) => {
+    if (err) {
+      res({
+        code: -1,
+        msg: "存储失败"
+      });
+    } else {
+      fs.stat(`./file/${filename}`, (_err, stats) => {
+        let fileMb = Math.ceil(stats.size / 1024 / 1024);
+        if (fileMb > 20) {
+          microtiaVideo();
+        } else {
+          res({
+            code: 200,
+            msg: "存储文件成功"
+          });
+        }
+      });
+    }
+  });
+
+};
 
 // 神回复
 const godReplies = function () {
@@ -65,9 +93,9 @@ const hotSearch = function () {
 };
 
 // 绕口令
-const tongueTwister = function () {
+const tongueTwister = function (params: any) {
   return new Promise((resolve, reject) => {
-    let url = "http://api.tianapi.com/rkl/index?key=天行数据秘钥";
+    let url = "http://api.tianapi.com/rkl/index?" + params;
 
     request.get(url, function (error: any, _response: any, body: any) {
       if (error) {
@@ -125,6 +153,28 @@ const callSB = function (params: string) {
   });
 };
 
+// 网络热词
+const hotWords = function (params: any) {
+  return new Promise((resolve, _reject) => {
+    let url = "https://lab.magiconch.com/api/nbnhhsh/guess";
+    request.post(
+      url,
+      { body: params, json: true },
+      function (err: any, _res: any, body: any) {
+        if (!err && body[0] && body[0].trans && body[0].trans.length > 0) {
+          let newStr = `${params.text}的意思有\n`;
+          body[0].trans.map((item: string, index: number) => {
+            newStr += `${item}${index <= body[0].trans.length ? "\n" : ""}`;
+          });
+          resolve(newStr);
+        } else {
+          return;
+        }
+      }
+    );
+  });
+};
+
 // 每日天气
 const dailyWeather = function (params: string) {
   return new Promise((resolve, _reject) => {
@@ -159,6 +209,29 @@ const getCalendar = function () {
   });
 };
 
+// 小姐姐视频
+const getVideo = function () {
+  return new Promise((resolve, _reject) => {
+    request.get(
+      "https://v.api.aa1.cn/api/api-dy-girl/index.php?aa1=json",
+      function (err: any, _res: any, body: any) {
+        if (err) {
+          console.log(err);
+          resolve("视频请求出错");
+          return;
+        } else {
+          body = JSON.parse(body.split("</html>")[1].replace("\n", ""));
+          if (body.result == 200) {
+            downloadFile(body.mp4.split("//")[1], "1.mp4", resolve);
+          } else {
+            resolve("视频请求出错");
+          }
+        }
+      }
+    );
+  });
+};
+
 // 发送邮件
 const sendEmails = function (params: string) {
   return new Promise((resolve, _reject) => {
@@ -180,7 +253,7 @@ const sendEmails = function (params: string) {
 const poetryQuestion = function () {
   return new Promise((resolve, reject) => {
     let url =
-      "http://api.tianapi.com/scwd/index?key=天行数据秘钥";
+      "http://api.tianapi.com/scwd/index?key=a3374dea7dbba6291b1cd3c801fa4199";
 
     request.get(url, function (error: any, _response: any, body: any) {
       if (error) {
@@ -341,7 +414,7 @@ const landscapeMap = function () {
 // 成语接龙
 const idiomSolitaire = function (params: any) {
   return new Promise((resolve, _reject) => {
-    let url = `http://api.tianapi.com/chengyujielong/index?key=天行数据秘钥&word=${params.word}&userid=${params.userid}`;
+    let url = `http://api.tianapi.com/chengyujielong/index?key=a3374dea7dbba6291b1cd3c801fa4199&word=${params.word}&userid=${params.userid}`;
 
     request.get(url, function (error: any, _response: any, body: any) {
       if (error) {
@@ -383,7 +456,7 @@ const reportTime = function (params: string) {
         resolve("准点报时请求出错");
         return;
       }
-      resolve(body);
+      downloadFile(body, "1.mp3", resolve);
     });
   });
 };
@@ -452,7 +525,7 @@ const rainbowFart = function () {
 // 疫情查询
 const epidemicSituation = function (params: string) {
   return new Promise((resolve, _reject) => {
-    let url = `https://qqlykm.cn/api/yiqing?key=n6h5IawIb4RlsM0c00WJWwMm5D&city=${params}`;
+    let url = `https://v.api.aa1.cn/api/api-yq/index.php?city=${params}`;
 
     request.get(url, function (error: any, _response: any, body: any) {
       if (error) {
@@ -460,8 +533,8 @@ const epidemicSituation = function (params: string) {
         return;
       }
       let data = JSON.parse(body);
-      if (data.success) {
-        resolve(data.data);
+      if (data.region) {
+        resolve(data);
       } else {
         resolve("不好意思,后台有点小问题...请联系管理员处理");
       }
@@ -485,6 +558,63 @@ const flattererDog = function () {
   });
 };
 
+// 骚话
+const obsceneRemarks = function () {
+  return new Promise((resolve, _reject) => {
+    let url = "https://v.api.aa1.cn/api/api-saohua/index.php?type=json";
+
+    request.get(url, function (error: any, _response: any, body: any) {
+      if (error) {
+        resolve("骚话请求出错");
+        return;
+      }
+      let data = JSON.parse(body);
+      resolve(data.saohua);
+    });
+  });
+};
+
+// 微视
+const microtiaVideo = function () {
+  return new Promise((resolve, _reject) => {
+    request.get(
+      "https://v.api.aa1.cn/api/api-vs/index.php",
+      function (err: any, _res: any, body: any) {
+        if (err) {
+          console.log(err);
+          resolve("视频请求出错");
+          return;
+        } else {
+          body = body.split("'url':'")[1].replace("\n", "").split("'}</pre>")[0];
+          if (body) {
+            downloadFile(body, "2.mp4", resolve);
+          } else {
+            resolve("视频请求出错");
+          }
+        }
+      }
+    );
+  });
+};
+
+// 抖音小姐姐
+const TiktokVideo = function () {
+  return new Promise((resolve, _reject) => {
+    request.get(
+      "https://v.api.aa1.cn/api/api-girl-11-02/index.php?type=json",
+      function (err: any, _res: any, body: any) {
+        if (err) {
+          console.log(err);
+          resolve("视频请求出错");
+          return;
+        } else {
+          console.log(body);
+        }
+      }
+    );
+  });
+};
+
 export {
   godReplies,
   dateEnglish,
@@ -492,8 +622,10 @@ export {
   robotSay,
   tongueTwister,
   callSB,
+  hotWords,
   dailyWeather,
   getCalendar,
+  getVideo,
   sendEmails,
   poetryQuestion,
   emotionalQuotation,
@@ -510,5 +642,8 @@ export {
   lanternRiddles,
   rainbowFart,
   epidemicSituation,
-  flattererDog
+  flattererDog,
+  obsceneRemarks,
+  microtiaVideo,
+  TiktokVideo
 };
