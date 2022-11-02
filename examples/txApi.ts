@@ -65,9 +65,9 @@ const hotSearch = function () {
 };
 
 // 绕口令
-const tongueTwister = function (params: any) {
+const tongueTwister = function () {
   return new Promise((resolve, reject) => {
-    let url = "http://api.tianapi.com/rkl/index?" + params;
+    let url = "http://api.tianapi.com/rkl/index?key=天行数据秘钥";
 
     request.get(url, function (error: any, _response: any, body: any) {
       if (error) {
@@ -122,28 +122,6 @@ const callSB = function (params: string) {
       }
       resolve(body);
     });
-  });
-};
-
-// 网络热词
-const hotWords = function (params: any) {
-  return new Promise((resolve, _reject) => {
-    let url = "https://lab.magiconch.com/api/nbnhhsh/guess";
-    request.post(
-      url,
-      { body: params, json: true },
-      function (err: any, _res: any, body: any) {
-        if (!err && body[0] && body[0].trans && body[0].trans.length > 0) {
-          let newStr = `${params.text}的意思有\n`;
-          body[0].trans.map((item: string, index: number) => {
-            newStr += `${item}${index <= body[0].trans.length ? "\n" : ""}`;
-          });
-          resolve(newStr);
-        } else {
-          return;
-        }
-      }
-    );
   });
 };
 
@@ -202,7 +180,7 @@ const sendEmails = function (params: string) {
 const poetryQuestion = function () {
   return new Promise((resolve, reject) => {
     let url =
-      "http://api.tianapi.com/scwd/index?key=a3374dea7dbba6291b1cd3c801fa4199";
+      "http://api.tianapi.com/scwd/index?key=天行数据秘钥";
 
     request.get(url, function (error: any, _response: any, body: any) {
       if (error) {
@@ -363,7 +341,7 @@ const landscapeMap = function () {
 // 成语接龙
 const idiomSolitaire = function (params: any) {
   return new Promise((resolve, _reject) => {
-    let url = `http://api.tianapi.com/chengyujielong/index?key=a3374dea7dbba6291b1cd3c801fa4199&word=${params.word}&userid=${params.userid}`;
+    let url = `http://api.tianapi.com/chengyujielong/index?key=天行数据秘钥&word=${params.word}&userid=${params.userid}`;
 
     request.get(url, function (error: any, _response: any, body: any) {
       if (error) {
@@ -514,9 +492,8 @@ export {
   robotSay,
   tongueTwister,
   callSB,
-  hotWords,
   dailyWeather,
-  getCalendar
+  getCalendar,
   sendEmails,
   poetryQuestion,
   emotionalQuotation,

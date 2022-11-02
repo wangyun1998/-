@@ -15,7 +15,6 @@ import {
   robotSay,
   tongueTwister,
   callSB,
-  hotWords,
   dailyWeather,
   getCalendar,
   sendEmails,
@@ -452,7 +451,7 @@ async function onMessage(msg: Message) {
 
   // 绕口令
   if (/^#绕口令$/.test(msg.text())) {
-    let data = await tongueTwister("key=a3374dea7dbba6291b1cd3c801fa4199");
+    let data = await tongueTwister();
     await msg.say(data as string);
   }
 
