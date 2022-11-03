@@ -55,7 +55,7 @@ let problem: any,
 let lanternAnswer = "",
   lanternStart = false,roomName="";
 
-// 控制福利视频
+// 控制视频
 let benefitsVideo = false;
 
 // 控制微视短视频
@@ -142,7 +142,7 @@ async function onMessage(msg: Message) {
     await msg.say(helpStr);
   }
 
-  // 骂人
+  // 探讨人生
   if (/鞭策$/.test(msg.text())) {
     let data;
     if (msg.text().indexOf("重点")) {
@@ -153,7 +153,7 @@ async function onMessage(msg: Message) {
     await msg.say(data as string);
   };
 
-  // 抖音小姐姐
+  // 抖音视频
   if(/^#抖音$/.test(msg.text())){
     await TiktokVideo();
   };
@@ -468,7 +468,7 @@ async function onMessage(msg: Message) {
     }
   }
 
-  // 福利视频
+  // 视频
   if (
     /^#福利视频$/.test(msg.text()) && msg.self()
   ) {
