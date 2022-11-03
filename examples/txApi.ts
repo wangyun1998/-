@@ -139,7 +139,7 @@ const robotSay = function (params: any) {
   });
 };
 
-// 骂人
+// 探讨人生
 const callSB = function (params: string) {
   return new Promise((resolve, _reject) => {
     let url = `https://fun.886.be/api.php${params != "" ? "?level=max" : ""}`;
@@ -209,7 +209,7 @@ const getCalendar = function () {
   });
 };
 
-// 小姐姐视频
+// 视频
 const getVideo = function () {
   return new Promise((resolve, _reject) => {
     request.get(
@@ -597,7 +597,7 @@ const microtiaVideo = function () {
   });
 };
 
-// 抖音小姐姐
+// 抖音视频
 const TiktokVideo = function () {
   return new Promise((resolve, _reject) => {
     request.get(
