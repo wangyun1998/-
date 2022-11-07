@@ -93,9 +93,9 @@ const hotSearch = function () {
 };
 
 // 绕口令
-const tongueTwister = function (params: any) {
+const tongueTwister = function (params:string) {
   return new Promise((resolve, reject) => {
-    let url = "http://api.tianapi.com/rkl/index?" + params;
+    let url = `http://api.tianapi.com/rkl/index?key=${params}`;
 
     request.get(url, function (error: any, _response: any, body: any) {
       if (error) {
@@ -139,38 +139,25 @@ const robotSay = function (params: any) {
   });
 };
 
-// 探讨人生
-const callSB = function (params: string) {
+// 网络热词
+const hotWords = function (params: any) {
   return new Promise((resolve, _reject) => {
-    let url = `https://fun.886.be/api.php${params != "" ? "?level=max" : ""}`;
+    let url = `https://v.api.aa1.cn/api/api-jiki/index.php?text=${params}`;
     request.get(url, function (err: any, _res: any, body: any) {
       if (err) {
         resolve("请求出错");
         return;
+      } else {
+        body = JSON.parse(body.slice(0, -1));
+        let str = "";
+        for (let i = 0, leng = body.data.length; i < leng; i++) {
+          if (body.data[i].definitions && body.data[i].definitions.length > 0) {
+            str += `${body.data[i].definitions[0].content}  ——选自网友：${body.data[i].definitions[0].author.name}${i + 1 == leng ? "" : "\n\n"}`;
+          }
+        };
+        resolve(str);
       }
-      resolve(body);
-    });
-  });
-};
-
-// 网络热词
-const hotWords = function (params: any) {
-  return new Promise((resolve, _reject) => {
-    let url = "https://lab.magiconch.com/api/nbnhhsh/guess";
-    request.post(
-      url,
-      { body: params, json: true },
-      function (err: any, _res: any, body: any) {
-        if (!err && body[0] && body[0].trans && body[0].trans.length > 0) {
-          let newStr = `${params.text}的意思有\n`;
-          body[0].trans.map((item: string, index: number) => {
-            newStr += `${item}${index <= body[0].trans.length ? "\n" : ""}`;
-          });
-          resolve(newStr);
-        } else {
-          return;
-        }
-      }
+    }
     );
   });
 };
@@ -209,7 +196,7 @@ const getCalendar = function () {
   });
 };
 
-// 视频
+// 小姐姐视频
 const getVideo = function () {
   return new Promise((resolve, _reject) => {
     request.get(
@@ -253,7 +240,7 @@ const sendEmails = function (params: string) {
 const poetryQuestion = function () {
   return new Promise((resolve, reject) => {
     let url =
-      "http://api.tianapi.com/scwd/index?key=a3374dea7dbba6291b1cd3c801fa4199";
+      "http://api.tianapi.com/scwd/index?key=天行api秘钥";
 
     request.get(url, function (error: any, _response: any, body: any) {
       if (error) {
@@ -411,21 +398,21 @@ const landscapeMap = function () {
   });
 };
 
-// 成语接龙
+// 成语接龙(由于接口出问题，暂不可用)
 const idiomSolitaire = function (params: any) {
   return new Promise((resolve, _reject) => {
-    let url = `http://api.tianapi.com/chengyujielong/index?key=a3374dea7dbba6291b1cd3c801fa4199&word=${params.word}&userid=${params.userid}`;
+    let url = `https://api.muxiaoguo.cn/api/chengyujielong?api_key=秘钥&word=${params.isStart ? params.word : "Start"}&used=${params?.word}`;
 
     request.get(url, function (error: any, _response: any, body: any) {
       if (error) {
-        resolve("风景图请求出错");
+        resolve("成语接龙请求出错");
         return;
       }
       let data = JSON.parse(body);
       if (data.code == 200) {
-        resolve(data.newslist[0]);
+        resolve(data);
       } else {
-        resolve("不好意思,后台有点小问题...请联系管理员处理");
+        resolve(data.data.content);
       }
     });
   });
@@ -525,7 +512,7 @@ const rainbowFart = function () {
 // 疫情查询
 const epidemicSituation = function (params: string) {
   return new Promise((resolve, _reject) => {
-    let url = `https://v.api.aa1.cn/api/api-yq/index.php?city=${params}`;
+    let url = `https://covid.myquark.cn/quark/covid/data/index_data?format=json&type=latest&city=${params}`;
 
     request.get(url, function (error: any, _response: any, body: any) {
       if (error) {
@@ -533,8 +520,8 @@ const epidemicSituation = function (params: string) {
         return;
       }
       let data = JSON.parse(body);
-      if (data.region) {
-        resolve(data);
+      if (data.success) {
+        resolve(data.data);
       } else {
         resolve("不好意思,后台有点小问题...请联系管理员处理");
       }
@@ -597,7 +584,7 @@ const microtiaVideo = function () {
   });
 };
 
-// 抖音视频
+// 抖音小姐姐
 const TiktokVideo = function () {
   return new Promise((resolve, _reject) => {
     request.get(
@@ -608,7 +595,12 @@ const TiktokVideo = function () {
           resolve("视频请求出错");
           return;
         } else {
-          console.log(body);
+          body = JSON.parse(body);
+          if (body.result == 200) {
+            downloadFile(body.mp4.split("//")[1], "3.mp4", resolve);
+          } else {
+            resolve("不好意思,后台有点小问题...请联系管理员处理");
+          }
         }
       }
     );
@@ -621,7 +613,6 @@ export {
   hotSearch,
   robotSay,
   tongueTwister,
-  callSB,
   hotWords,
   dailyWeather,
   getCalendar,
