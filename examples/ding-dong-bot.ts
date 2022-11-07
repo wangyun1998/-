@@ -12,11 +12,9 @@ import {
   hotSearch,
   robotSay,
   tongueTwister,
-  callSB,
   hotWords,
   dailyWeather,
   getCalendar,
-  getVideo,
   sendEmails,
   poetryQuestion,
   emotionalQuotation,
@@ -42,8 +40,9 @@ import {
 // 控制机器人开关
 let bootOpen = false;
 // 控制成语接龙开关
-let userid: string = "",
-  isStart = false,
+let isStart = false,
+  wordList: Array<string> = [],
+  endText: "",
   timer: any = null,
   time = 20;
 // 控制诗词问答
@@ -53,13 +52,13 @@ let problem: any,
 
 // 灯谜答案
 let lanternAnswer = "",
-  lanternStart = false,roomName="";
-
-// 控制视频
-let benefitsVideo = false;
+  lanternStart = false, roomName = "";
 
 // 控制微视短视频
 let micVideo = false;
+
+// 控制抖音视频
+let TiktokVideoPlay = false;
 
 function onScan(qrcode: string, status: ScanStatus) {
   if (status === ScanStatus.Waiting || status === ScanStatus.Timeout) {
@@ -75,9 +74,9 @@ function onScan(qrcode: string, status: ScanStatus) {
       qrcodeImageUrl
     );
 
-    qrcodeTerminal.generate(qrcode, { small: true }); // show qrcode on console
+    qrcodeTerminal.generate(qrcode, { small: true }); // 在终端展示二维码
   } else {
-    log.info("运行机器人", "请再次扫码: %s(%s)", ScanStatus[status], status);
+    log.info("运行机器人", "请确认", ScanStatus[status], status);
   }
 }
 
@@ -103,6 +102,7 @@ async function onMessage(msg: Message) {
 
   // 帮助
   let apiList = [
+    "加群",
     "日历",
     "绕口令",
     "热搜",
@@ -119,14 +119,16 @@ async function onMessage(msg: Message) {
     "讲个笑话",
     "风景图",
     "疫情查询",
-    // "成语接龙" 未完善,
+    "成语接龙",
     "猜灯谜",
     "头像",
     "健康小提示",
     "准点报时",
     "舔狗",
-    "渣男语录",
-    "微视"
+    "渣男",
+    "网络热词",
+    "微视",
+    "抖音"
   ],
     helpStr = "";
   if (/^#帮助$/.test(msg.text())) {
@@ -136,26 +138,37 @@ async function onMessage(msg: Message) {
         : apiList[i] == "头像"
           ? `${apiList[i]}(1：男头 2：女头 3：动漫 4：景物)`
           : apiList[i] == "疫情查询" ? `${apiList[i]}城市名`
-            : apiList[i]
+            : apiList[i] == "加群" ? "群名" : apiList[i]
+              == "网络热词" ? "查梗" : apiList[i]
         }${i + 1 == leng ? "" : "\n"}`;
     }
     await msg.say(helpStr);
   }
 
-  // 探讨人生
-  if (/鞭策$/.test(msg.text())) {
-    let data;
-    if (msg.text().indexOf("重点")) {
-      data = await callSB("1");
-    } else {
-      data = await callSB("");
+  // 查梗
+  if (/^#查梗.+/.test(msg.text())) {
+    let data = await hotWords(encodeURI(msg.text().split("#查梗")[1]));
+    if (data) {
+      await msg.say(data as string);
     }
-    await msg.say(data as string);
   };
 
-  // 抖音视频
-  if(/^#抖音$/.test(msg.text())){
-    await TiktokVideo();
+  // 抖音小姐姐
+  if (/^#抖音$/.test(msg.text())) {
+    if (TiktokVideoPlay) {
+      await msg.say("请等待上一个视频加载完成...");
+      return;
+    }
+    TiktokVideoPlay = true;
+    let data: any = await TiktokVideo();
+    if (data.code > 0) {
+      await msg.say("请稍候...");
+      await msg.say(FileBox.fromFile("./file/3.mp4"));
+      TiktokVideoPlay = false;
+    } else {
+      await msg.say(data);
+      TiktokVideoPlay = false;
+    }
   };
 
   // 微视短视频
@@ -167,7 +180,7 @@ async function onMessage(msg: Message) {
     micVideo = true;
     let data: any = await microtiaVideo();
     if (data.code > 0) {
-      await msg.say("请稍后...");
+      msg.say("请稍候...");
       await msg.say(FileBox.fromFile("./file/2.mp4"));
       micVideo = false;
     } else {
@@ -177,7 +190,7 @@ async function onMessage(msg: Message) {
   };
 
   // 渣男
-  if (/#渣男语录$/.test(msg.text())) {
+  if (/#渣男$/.test(msg.text())) {
     let data = await obsceneRemarks();
     await msg.say(data as string);
   };
@@ -191,9 +204,29 @@ async function onMessage(msg: Message) {
   // 全国疫情
   if (/^#疫情查询[\u4E00-\u9FA5\uF900-\uFA2D]{2,3}$/.test(msg.text())) {
     let data: any = await epidemicSituation(encodeURI(msg.text().split("#疫情查询")[1] as string));
-    if (data.diagnosis != "" && data.death != "") {
-      let { region,diagnosis,death,cure,time,cj } = data;
-      await msg.say(`${region}疫情数据\n目前确诊人数：${diagnosis}\n累计死亡：${death}，累计治愈：${cure}。\n数据来源：${cj}\n\n${time}`);
+    if (data.location.city == msg.text().split("#疫情查询")[1] && data.cityData.length > 0) {
+      let { time, cityData, local } = data, localText = "";
+      if (local.data.localDistricts.length > 0) {
+        local.data.localDistricts.map((item: any) => {
+          localText += `${item.district == "未公布来源" ? "" : item.district + "\n"}`;
+          if (item.track_list.length > 0) {
+            item.track_list.map((i: any) => {
+              if (item.district == i.district) {
+                localText += `轨迹点：${i.loc_name}\n`;
+              }
+            });
+          }
+          if (item.risk_area_list.length > 0) {
+            item.risk_area_list.map((t: any) => {
+              if (item.district == t.district) {
+                localText += `${t.level == 1 ? "中风险：" : "高风险："}${t.address}\n`;
+              }
+            });
+          }
+          localText += "\n";
+        });
+      }
+      await msg.say(`${cityData.city}昨日新增：${cityData.sure_new_loc}，昨日无症状：${cityData.sure_new_hid}现有确诊：${cityData.present}，高/中风险区：${cityData.danger["2"]}/${cityData.danger["1"]}\n${localText}${time}`);
     } else {
       await msg.say("抱歉未查询出该地区的疫情状况，(。・＿・。)ﾉI’m sorry~");
     }
@@ -212,7 +245,7 @@ async function onMessage(msg: Message) {
     if (data instanceof Object) {
       lanternStart = true;
       let { riddle, answer, description, type } = data;
-      lanternAnswer += `${answer}|${description}`;
+      lanternAnswer = `${answer}|${description}`;
       await msg.say(
         `谜语：${riddle}\n提示：${type}\n回答要带=号\n\n输入#灯谜答案\n即可查看谜底`
       );
@@ -243,7 +276,7 @@ async function onMessage(msg: Message) {
   if (/^#准点报时$/.test(msg.text())) {
     let data: any = await reportTime(encodeURI(`${new Date().getHours()}:00`));
     if (data.code > 0) {
-      await msg.say("请稍后...");
+      await msg.say("请稍候...");
       await msg.say(FileBox.fromFile("./file/1.mp3"));
     }
   }
@@ -274,50 +307,54 @@ async function onMessage(msg: Message) {
   }
 
   // 成语接龙
-  if (/^#!成语接龙$/.test(msg.text()) && !isStart) {
-    userid = msg.talker().payload?.id as string;
-    isStart = true;
-    msg.say("成语接龙,游戏开始！\n注意：回答要带#号，您先出题");
-  }
-  if (
-    msg.text() != "#成语接龙" &&
-    /^#[\u4E00-\u9FA5\uF900-\uFA2D]{4}$/.test(msg.text()) &&
-    isStart &&
-    userid == msg.talker().payload?.id
-  ) {
-    if (timer) {
+  async function idiom() {
+    let data: any = await idiomSolitaire({ isStart, word: wordList.length > 0 ? encodeURI(wordList.join(",")) : "" });
+    if (data.code == 200) {
       clearInterval(timer);
-      (timer = null), (time = 20);
-    }
-    let data = await idiomSolitaire({
-      word: encodeURI(msg.text().split("#")[1] as string),
-      userid
-    });
-    if ((data as any).chengyu) {
-      await msg.say((data as any).chengyu);
-      await msg.say("请作答,20秒倒计时");
+      timer = null;
+      time = 20;
+      isStart = true;
+      wordList.push(data.data.name);
+      endText = data.data.endStr;
+      await msg.say(data.data.name);
+      await msg.say(`回答倒计时${time}秒，计时开始。`);
       timer = setInterval(() => {
-        if (time == 0) {
+        console.log(wordList);
+        if (time <= 0) {
+          msg.say("时间到，游戏结束。");
+          isStart = false;
+          wordList = [];
           clearInterval(timer);
-          (isStart = false), (timer = null), (time = 20), (userid = "");
-          msg.say("倒计时结束,你输了");
-          return;
-        }
-        msg.say(time);
-        time--;
+          timer = null;
+          time = 20;
+        } else {
+          time--;
+        };
       }, 1000);
     } else {
-      await msg.say((data as any).tip + ",游戏结束。");
-      (isStart = false), (timer = null), (time = 20), (userid = "");
+      isStart = false;
+      wordList = [];
+      clearInterval(timer);
+      timer = null;
+      time = 20;
+      await msg.say(`${data.split("，")[0]}，游戏结束。`);
+    };
+  };
+  if (/^#成语接龙$/.test(msg.text()) && !isStart) {
+    msg.say("成语接龙,游戏开始！\n注意：回答要带#号");
+    idiom();
+  }
+  if (isStart && /^#[\u4E00-\u9FA5\uF900-\uFA2D]{4}/.test(msg.text()) && wordList.length > 0) {
+    if (msg.text().split("#")[1]!.indexOf(endText) > -1) {
+      wordList.push(msg.text().split("#")[1] as string);
+      idiom();
+    } else {
+      await msg.say(`请接以${endText}开头的成语！`);
     }
   }
-  if (
-    /^#结束成语接龙$/.test(msg.text()) &&
-    isStart &&
-    userid == msg.talker().payload?.id
-  ) {
+  if (/^#结束成语接龙$/.test(msg.text()) && isStart) {
     isStart = false;
-    userid = "";
+    wordList = [];
     await msg.say("成语接龙游戏已结束");
   }
 
@@ -468,26 +505,6 @@ async function onMessage(msg: Message) {
     }
   }
 
-  // 视频
-  if (
-    /^#福利视频$/.test(msg.text()) && msg.self()
-  ) {
-    if (benefitsVideo) {
-      await msg.say("请等待上一个视频加载完成...");
-      return;
-    };
-    benefitsVideo = true;
-    let data: any = await getVideo();
-    if (data.code > 0) {
-      await msg.say("请稍后...");
-      await msg.say(FileBox.fromFile("./file/1.mp4"));
-      benefitsVideo = false;
-    } else {
-      await msg.say(data);
-      benefitsVideo = false;
-    }
-  }
-
   // 摸鱼人日历
   if (/^#日历$/.test(msg.text())) {
     let data = await getCalendar();
@@ -496,7 +513,7 @@ async function onMessage(msg: Message) {
 
   // 绕口令
   if (/^#绕口令$/.test(msg.text())) {
-    let data = await tongueTwister("key=a3374dea7dbba6291b1cd3c801fa4199");
+    let data = await tongueTwister("秘钥");
     await msg.say(data as string);
   }
 
@@ -517,10 +534,8 @@ async function onMessage(msg: Message) {
     /^#天气[\u4E00-\u9FA5\uF900-\uFA2D]{2,}/.test(msg.text()) &&
     !/^#天气[\u4E00-\u9FA5\uF900-\uFA2D]{2,}周/.test(msg.text())
   ) {
-    let text = msg.text().split("#天气")[1];
-    if (!text) {
-      text = "广州";
-    } else if (text.indexOf("周") > -1) {
+    let text: any = msg.text().split("#天气")[1];
+    if (text.indexOf("周") > -1) {
       text = text.split("周")[1];
     }
     let data: any = await dailyWeather(encodeURI(text as string) as string);
@@ -601,7 +616,7 @@ async function onMessage(msg: Message) {
   }
 
   // 关键词邀请进群
-  if (/^#群名$/.test(msg.text()) && !msg.self()) {
+  if (/^#关键词$/.test(msg.text()) && !msg.self()) {
     let contact: any = await bot.Contact.find({
       name: msg.talker()?.payload?.name
     });
@@ -657,8 +672,13 @@ async function onMessage(msg: Message) {
       msg.say("微信机器人已关闭");
     }
   }
-  if (bootOpen && msg.text() != "" && !msg.self()) {
-    let data = await robotSay(encodeURI(msg.text()));
+  if (bootOpen && msg.text() != "" && !msg.self() && /^#[\u4E00-\u9FA5\uF900-\uFA2D]+/.test(msg.text())) {
+    apiList.map(item => {
+      if (msg.text().split("#")[1] == item) {
+        return;
+      }
+    });
+    let data = await robotSay(encodeURI(msg.text().split("#")[1]));
     await msg.say(data as string);
   } else {
     return;
@@ -666,14 +686,14 @@ async function onMessage(msg: Message) {
 }
 
 // 加入群聊时触发
-async function onRoomJoin(room: any, inviteeList: any, inviter: any) {
+async function onRoomJoin(room: any, inviteeList: any, _inviter: any) {
   const nameList = inviteeList.map((c: any) => c.name()).join(",");
   let topic = await room.topic();
   let myRoom = await bot.Room.find({
     topic
   });
-  if (myRoom) {
-    myRoom.say(`欢迎新朋友${nameList}加入${topic}群`);
+  if (myRoom && topic == "群名") {
+    myRoom.say(`欢迎新朋友${nameList}加入${topic}`);
   } else {
     console.log(1);
   }
@@ -681,10 +701,9 @@ async function onRoomJoin(room: any, inviteeList: any, inviter: any) {
 
 // 添加好友触发
 async function onFriendship(friendship: any) {
-  console.log(friendship.hello());
   try {
     if (friendship.type() == 2) {
-      if (friendship.hello() === "进前端群") {
+      if (friendship.hello() === "验证信息") {
         await friendship.accept();
       }
     } else if (friendship.type() == 1) {
@@ -695,6 +714,7 @@ async function onFriendship(friendship: any) {
       });
       if (contact) {
         await contact.say("你好呀");
+        await contact.say("试试输入 #帮助");
       } else {
         console.log("没有此好友");
       }
