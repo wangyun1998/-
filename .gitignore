@@ -1,1 +1,5 @@
 /node_modules
+package-lock.json
+ding-dong-bot.memory-card.json
+yarn.lock
+.idea

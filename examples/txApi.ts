@@ -81,7 +81,7 @@ const hotSearch = function () {
       let data = JSON.parse(body);
       if (data.code == 200) {
         let item =
-            data.newslist[Math.floor(Math.random() * data.newslist.length)];
+          data.newslist[Math.floor(Math.random() * data.newslist.length)];
         let content = `标题：${item.title}\n热搜度：${item.hotnum}\n内容：${item.digest}`;
         resolve(content);
       } else {
@@ -93,7 +93,7 @@ const hotSearch = function () {
 };
 
 // 绕口令
-const tongueTwister = function (params:string) {
+const tongueTwister = function (params: string) {
   return new Promise((resolve, reject) => {
     let url = `http://api.tianapi.com/rkl/index?key=${params}`;
 
@@ -105,8 +105,8 @@ const tongueTwister = function (params:string) {
       let data = JSON.parse(body);
       if (data.code == 200) {
         data.newslist[0].content = data.newslist[0].content.replace(
-            /<br\/>/g,
-            "\n"
+          /<br\/>/g,
+          "\n"
         );
         resolve(data.newslist[0].content);
       } else {
@@ -121,7 +121,7 @@ const tongueTwister = function (params:string) {
 const robotSay = function (params: any) {
   return new Promise((resolve, reject) => {
     let url =
-        "https://api.ownthink.com/bot?appid=xiaosi&userid=user&spoken=" + params;
+      "https://api.ownthink.com/bot?appid=xiaosi&userid=user&spoken=" + params;
     request.get(url, function (error: any, _response: any, body: any) {
       if (error) {
         resolve("请求出错");
@@ -144,20 +144,20 @@ const hotWords = function (params: any) {
   return new Promise((resolve, _reject) => {
     let url = `https://v.api.aa1.cn/api/api-jiki/index.php?text=${params}`;
     request.get(url, function (err: any, _res: any, body: any) {
-          if (err) {
-            resolve("请求出错");
-            return;
-          } else {
-            body = JSON.parse(body.slice(0, -1));
-            let str = "";
-            for (let i = 0, leng = body.data.length; i < leng; i++) {
-              if (body.data[i].definitions && body.data[i].definitions.length > 0) {
-                str += `${body.data[i].definitions[0].content}  ——选自网友：${body.data[i].definitions[0].author.name}${i + 1 == leng ? "" : "\n\n"}`;
-              }
-            };
-            resolve(str);
+      if (err) {
+        resolve("请求出错");
+        return;
+      } else {
+        body = JSON.parse(body.slice(0, -1));
+        let str = "";
+        for (let i = 0, leng = body.data.length; i < leng; i++) {
+          if (body.data[i].definitions && body.data[i].definitions.length > 0) {
+            str += `${body.data[i].definitions[0].content}  ——选自网友：${body.data[i].definitions[0].author.name}${i + 1 == leng ? "" : "\n\n"}`;
           }
-        }
+        };
+        resolve(str);
+      }
+    }
     );
   });
 };
@@ -166,46 +166,46 @@ const hotWords = function (params: any) {
 const dailyWeather = function (params: string) {
   return new Promise((resolve, _reject) => {
     request.get(
-        `https://api.qqsuu.cn/api/dm-tianqi?city=${params}`,
-        function (err: any, _res: any, body: any) {
-          if (err) {
-            resolve("天气请求出错");
-            return;
-          } else {
-            resolve(JSON.parse(body));
-          }
+      `https://api.qqsuu.cn/api/dm-tianqi?city=${params}`,
+      function (err: any, _res: any, body: any) {
+        if (err) {
+          resolve("天气请求出错");
+          return;
+        } else {
+          resolve(JSON.parse(body));
         }
+      }
     );
   });
 };
 
 // 色图
 const getSeTu = function (keyword: string) {
-  return new Promise((resolve, _reject) => {
+  return new Promise<any>((resolve, _reject) => {
     const randomIndex = Math.floor(Math.random() * 600) + 1;
     const page = Math.ceil(randomIndex / 10);
     const index = randomIndex % 10;
-    console.log(  `https://yingtall.com/wp-json/wp/v2/posts?page=${keyword ? 1 : page}${keyword ? `&search=${keyword}` : ''}`)
+    console.log(`https://yingtall.com/wp-json/wp/v2/posts?page=${keyword ? 1 : page}${keyword ? `&search=${keyword}` : ''}`)
     request.get(
-        `https://yingtall.com/wp-json/wp/v2/posts?page=${keyword ? 1 : page}${keyword ? `&search=${keyword}` : ''}`,
-        function (err: any, res: any, _body: any) {
-          if (err) {
-            resolve("涩图请求出错",err);
+      `https://yingtall.com/wp-json/wp/v2/posts?page=${keyword ? 1 : page}${keyword ? `&search=${keyword}` : ''}`,
+      function (err: any, _: any, _body: any) {
+        if (err) {
+          resolve("涩图请求出错");
+          return;
+        } else {
+          const resJsonData = JSON.parse(_body);
+          if (!resJsonData.length) {
+            resolve("额。没有探索到，换个姿势再来一次吧～");
             return;
-          } else {
-            const resJsonData = JSON.parse(_body);
-            if (!resJsonData.length) {
-              resolve("额。没有探索到，换个姿势再来一次吧～");
-              return;
-            }
-            const content = resJsonData[index].content;
-            if (!content || !content.rendered) {
-              resolve("额。没有探索到，换个姿势再来一次吧～");
-              return;
-            }
-            resolve(content.rendered);
           }
+          const content = resJsonData[index].content;
+          if (!content || !content.rendered) {
+            resolve("额。没有探索到，换个姿势再来一次吧～");
+            return;
+          }
+          resolve(content.rendered);
         }
+      }
     );
   });
 };
@@ -213,15 +213,15 @@ const getSeTu = function (keyword: string) {
 const getFuRui = function () {
   return new Promise((resolve, _reject) => {
     request.get(
-        "https://wallhaven.cc/api/v1/search?q=furry girls&purity=010&sorting=random&categories=011",
-        function (err: any, res: any, _body: any) {
-          if (err) {
-            resolve("福瑞请求出错");
-            return;
-          } else {
-            resolve(JSON.parse(_body).data[0].path);
-          }
+      "https://wallhaven.cc/api/v1/search?q=furry girls&purity=010&sorting=random&categories=011",
+      function (err: any, res: any, _body: any) {
+        if (err) {
+          resolve("福瑞请求出错");
+          return;
+        } else {
+          resolve(JSON.parse(_body).data[0].path);
         }
+      }
     );
   });
 }
@@ -230,15 +230,15 @@ const getFuRui = function () {
 const getLesbian = function () {
   return new Promise((resolve, _reject) => {
     request.get(
-        "https://wallhaven.cc/api/v1/search?q=Lesbian&purity=010&sorting=random&categories=011",
-        function (err: any, res: any, _body: any) {
-          if (err) {
-            resolve("女同请求出错");
-            return;
-          } else {
-            resolve(JSON.parse(_body).data[0].path);
-          }
+      "https://wallhaven.cc/api/v1/search?q=Lesbian&purity=010&sorting=random&categories=011",
+      function (err: any, res: any, _body: any) {
+        if (err) {
+          resolve("女同请求出错");
+          return;
+        } else {
+          resolve(JSON.parse(_body).data[0].path);
         }
+      }
     );
   });
 }
@@ -247,15 +247,15 @@ const getLesbian = function () {
 const getCos = function () {
   return new Promise((resolve, _reject) => {
     request.get(
-        "https://api.vvhan.com/api/mobil.girl",
-        function (err: any, res: any, _body: any) {
-          if (err) {
-            resolve("cos请求出错");
-            return;
-          } else {
-            resolve(res.request.uri.href);
-          }
+      "https://api.vvhan.com/api/mobil.girl",
+      function (err: any, res: any, _body: any) {
+        if (err) {
+          resolve("cos请求出错");
+          return;
+        } else {
+          resolve(res.request.uri.href);
         }
+      }
     );
   });
 };
@@ -264,15 +264,15 @@ const getCos = function () {
 const getCalendar = function () {
   return new Promise((resolve, _reject) => {
     request.get(
-        "https://api.vvhan.com/api/moyu",
-        function (err: any, res: any, _body: any) {
-          if (err) {
-            resolve("日历请求出错");
-            return;
-          } else {
-            resolve(res.request.uri.href);
-          }
+      "https://api.vvhan.com/api/moyu",
+      function (err: any, res: any, _body: any) {
+        if (err) {
+          resolve("日历请求出错");
+          return;
+        } else {
+          resolve(res.request.uri.href);
         }
+      }
     );
   });
 };
@@ -281,15 +281,15 @@ const getCalendar = function () {
 const getNews = function () {
   return new Promise((resolve, _reject) => {
     request.get(
-        "https://api.vvhan.com/api/60s",
-        function (err: any, res: any, _body: any) {
-          if (err) {
-            resolve("请求出错");
-            return;
-          } else {
-            resolve(res.request.uri.href);
-          }
+      "https://api.vvhan.com/api/60s",
+      function (err: any, res: any, _body: any) {
+        if (err) {
+          resolve("请求出错");
+          return;
+        } else {
+          resolve(res.request.uri.href);
         }
+      }
     );
   });
 };
@@ -298,21 +298,21 @@ const getNews = function () {
 const getVideo = function () {
   return new Promise((resolve, _reject) => {
     request.get(
-        "https://v.api.aa1.cn/api/api-dy-girl/index.php?aa1=json",
-        function (err: any, _res: any, body: any) {
-          if (err) {
-            console.log(err);
-            resolve("视频请求出错");
-            return;
+      "https://v.api.aa1.cn/api/api-dy-girl/index.php?aa1=json",
+      function (err: any, _res: any, body: any) {
+        if (err) {
+          console.log(err);
+          resolve("视频请求出错");
+          return;
+        } else {
+          body = JSON.parse(body.split("</html>")[1].replace("\n", ""));
+          if (body.result == 200) {
+            downloadFile(body.mp4.split("//")[1], "1.mp4", resolve);
           } else {
-            body = JSON.parse(body.split("</html>")[1].replace("\n", ""));
-            if (body.result == 200) {
-              downloadFile(body.mp4.split("//")[1], "1.mp4", resolve);
-            } else {
-              resolve("视频请求出错");
-            }
+            resolve("视频请求出错");
           }
         }
+      }
     );
   });
 };
@@ -321,15 +321,15 @@ const getVideo = function () {
 const sendEmails = function (params: string) {
   return new Promise((resolve, _reject) => {
     request(
-        `https://v.api.aa1.cn/api/mail/t/api.php?${params}`,
-        (err: any, _res: any, body: any) => {
-          if (err) {
-            resolve("发送邮件出错");
-            return;
-          } else {
-            resolve(body);
-          }
+      `https://v.api.aa1.cn/api/mail/t/api.php?${params}`,
+      (err: any, _res: any, body: any) => {
+        if (err) {
+          resolve("发送邮件出错");
+          return;
+        } else {
+          resolve(body);
         }
+      }
     );
   });
 };
@@ -338,7 +338,7 @@ const sendEmails = function (params: string) {
 const poetryQuestion = function () {
   return new Promise((resolve, reject) => {
     let url =
-        "https://apis.tianapi.com/scwd/index?key=e913fffc9e6d4b29437a820714f3c3e1";
+      "https://apis.tianapi.com/scwd/index?key=e913fffc9e6d4b29437a820714f3c3e1";
 
     request.get(url, function (error: any, _response: any, body: any) {
       if (error) {
@@ -392,7 +392,7 @@ const poisonChickenSoup = function () {
 const musicHotMsg = function () {
   return new Promise((resolve, _reject) => {
     let url =
-        "https://v.api.aa1.cn/api/api-wenan-wangyiyunreping/index.php?aa1=json";
+      "https://v.api.aa1.cn/api/api-wenan-wangyiyunreping/index.php?aa1=json";
 
     request.get(url, function (error: any, _response: any, body: any) {
       if (error) {
@@ -430,7 +430,7 @@ const wallPaper = function () {
 const getConstellation = function (item: object) {
   return new Promise((resolve, _reject) => {
     let url = `https://api.vvhan.com/api/horoscope?type=${(item as any).type
-    }&time=${(item as any).time}`;
+      }&time=${(item as any).time}`;
     request.get(url, function (error: any, _response: any, body: any) {
       if (error) {
         resolve("星座运势请求出错");
@@ -440,14 +440,14 @@ const getConstellation = function (item: object) {
       let { success, data } = getData;
       if (success) {
         let res = `${data.title}\n综合运势：${data.fortune.all}\n运势解析:${data.fortunetext.all
-        }\n\n爱情运势：${data.fortune.love}\n运势解析：${data.fortunetext.love
-        }\n\n学业工作：${data.fortune.work}\n运势解析:${data.fortunetext.work
-        }\n\n财富运势：${data.fortune.money}\n运势解析:${data.fortunetext.money
-        }${data.luckycolor ? "\n\n幸运颜色：" + data.luckycolor : ""}${data.luckynumber ? "\n幸运数字：" + data.luckynumber : ""
-        }${data.luckyconstellation
+          }\n\n爱情运势：${data.fortune.love}\n运势解析：${data.fortunetext.love
+          }\n\n学业工作：${data.fortune.work}\n运势解析:${data.fortunetext.work
+          }\n\n财富运势：${data.fortune.money}\n运势解析:${data.fortunetext.money
+          }${data.luckycolor ? "\n\n幸运颜色：" + data.luckycolor : ""}${data.luckynumber ? "\n幸运数字：" + data.luckynumber : ""
+          }${data.luckyconstellation
             ? "\n速配星座：" + data.luckyconstellation
             : ""
-        }`;
+          }`;
         resolve(res);
       } else {
         resolve("不好意思,后台有点小问题...请联系管理员处理");
@@ -663,21 +663,21 @@ const obsceneRemarks = function () {
 const microtiaVideo = function () {
   return new Promise((resolve, _reject) => {
     request.get(
-        "https://v.api.aa1.cn/api/api-vs/index.php",
-        function (err: any, _res: any, body: any) {
-          if (err) {
-            console.log(err);
-            resolve("视频请求出错");
-            return;
+      "https://v.api.aa1.cn/api/api-vs/index.php",
+      function (err: any, _res: any, body: any) {
+        if (err) {
+          console.log(err);
+          resolve("视频请求出错");
+          return;
+        } else {
+          body = body.split("'url':'")[1].replace("\n", "").split("'}</pre>")[0];
+          if (body) {
+            downloadFile(body, "2.mp4", resolve);
           } else {
-            body = body.split("'url':'")[1].replace("\n", "").split("'}</pre>")[0];
-            if (body) {
-              downloadFile(body, "2.mp4", resolve);
-            } else {
-              resolve("视频请求出错");
-            }
+            resolve("视频请求出错");
           }
         }
+      }
     );
   });
 };
@@ -686,22 +686,22 @@ const microtiaVideo = function () {
 const TiktokVideo = function () {
   return new Promise((resolve, _reject) => {
     request.get(
-        "https://v.api.aa1.cn/api/api-girl-11-02/index.php?type=json",
-        function (err: any, _res: any, body: any) {
-          if (err) {
-            console.log(err);
-            resolve("视频请求出错");
-            return;
+      "https://v.api.aa1.cn/api/api-girl-11-02/index.php?type=json",
+      function (err: any, _res: any, body: any) {
+        if (err) {
+          console.log(err);
+          resolve("视频请求出错");
+          return;
+        } else {
+          body = JSON.parse(body);
+          if (body.result == 200) {
+            downloadFile("https:" + body.mp4, "3.mp4", resolve);
+            // resolve(encodeURI("https:"+body.mp4));
           } else {
-            body = JSON.parse(body);
-            if (body.result == 200) {
-              downloadFile("https:"+body.mp4, "3.mp4", resolve);
-              // resolve(encodeURI("https:"+body.mp4));
-            } else {
-              resolve("不好意思,后台有点小问题...请联系管理员处理");
-            }
+            resolve("不好意思,后台有点小问题...请联系管理员处理");
           }
         }
+      }
     );
   });
 };
