@@ -1,12 +1,19 @@
 import "dotenv/config.js";
-
+const configuration = new Configuration({
+  apiKey: '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',
+})
 import { Contact, Message, ScanStatus, WechatyBuilder, log } from "wechaty";
 
 import qrcodeTerminal from "qrcode-terminal";
-
+import { Configuration, OpenAIApi } from 'openai'
+const openai = new OpenAIApi(configuration)
 import { FileBox } from "file-box";
 
 import {
+  getSeTu,
+  getFuRui,
+  getLesbian,
+  getCos,
   godReplies,
   dateEnglish,
   hotSearch,
@@ -15,6 +22,7 @@ import {
   hotWords,
   dailyWeather,
   getCalendar,
+  getNews,
   sendEmails,
   poetryQuestion,
   emotionalQuotation,
@@ -34,25 +42,26 @@ import {
   flattererDog,
   obsceneRemarks,
   microtiaVideo,
-  TiktokVideo
+  TiktokVideo,
+  getVideo
 } from "./txApi.js";
 
 // 控制机器人开关
 let bootOpen = false;
 // 控制成语接龙开关
 let isStart = false,
-  wordList: Array<string> = [],
-  endText: "",
-  timer: any = null,
-  time = 20;
+    wordList: Array<string> = ['为所欲为'],
+    endText: "",
+    timer: any = null,
+    time = 20;
 // 控制诗词问答
 let problem: any,
-  answer = false,
-  answerList = [];
+    answer = false,
+    answerList = [];
 
 // 灯谜答案
 let lanternAnswer = "",
-  lanternStart = false, roomName = "";
+    lanternStart = false, roomName = "";
 
 // 控制微视短视频
 let micVideo = false;
@@ -67,11 +76,11 @@ function onScan(qrcode: string, status: ScanStatus) {
       encodeURIComponent(qrcode)
     ].join("");
     log.info(
-      "运行机器人",
-      "请扫码: %s(%s) - %s",
-      ScanStatus[status],
-      status,
-      qrcodeImageUrl
+        "运行机器人",
+        "请扫码: %s(%s) - %s",
+        ScanStatus[status],
+        status,
+        qrcodeImageUrl
     );
 
     qrcodeTerminal.generate(qrcode, { small: true }); // 在终端展示二维码
@@ -102,45 +111,50 @@ async function onMessage(msg: Message) {
 
   // 帮助
   let apiList = [
-    "加群",
-    "日历",
-    "绕口令",
-    "热搜",
-    "神回复",
-    "天气",
-    "英语",
-    "发送邮件",
-    "诗词问答",
-    "伤感语录",
-    "毒鸡汤",
-    "网易云热评",
-    "壁纸",
-    "星座运势",
-    "讲个笑话",
-    "风景图",
-    "疫情查询",
-    "成语接龙",
-    "猜灯谜",
-    "头像",
-    "健康小提示",
-    "准点报时",
-    "舔狗",
-    "渣男",
-    "网络热词",
-    "微视",
-    "抖音"
-  ],
-    helpStr = "";
-  if (/^#帮助$/.test(msg.text())) {
+        "加群",
+        "日历",
+        "绕口令",
+        "热搜",
+        "神回复",
+        "天气",
+        "英语",
+        "发送邮件",
+        "诗词问答",
+        "伤感语录",
+        "毒鸡汤",
+        "网易云热评",
+        "壁纸",
+        "星座运势",
+        "讲个笑话",
+        "风景图",
+        "疫情查询",
+        "成语接龙",
+        "猜灯谜",
+        "头像",
+        "健康小提示",
+        "准点报时",
+        "舔狗",
+        "渣男",
+        "网络热词",
+        "微视",
+        "cos",
+        "福瑞",
+        "涩图",
+        "女同",
+        "60s",
+        "抖音"
+      ],
+      helpStr = "";
+  if (/^#帮助|#菜单|#功能$/.test(msg.text())) {
     for (let i = 0, leng = apiList.length; i < leng; i++) {
       helpStr += `${i + 1}、${apiList[i]}，命令：#${apiList[i] == "天气"
-        ? apiList[i] + "(周)城市名"
-        : apiList[i] == "头像"
-          ? `${apiList[i]}(1：男头 2：女头 3：动漫 4：景物)`
-          : apiList[i] == "疫情查询" ? `${apiList[i]}城市名`
-            : apiList[i] == "加群" ? "群名" : apiList[i]
-              == "网络热词" ? "查梗" : apiList[i]
-        }${i + 1 == leng ? "" : "\n"}`;
+          ? apiList[i] + "(周)城市名"
+          : apiList[i] == "头像"
+              ? `${apiList[i]}(1：男头 2：女头 3：动漫 4：景物)`
+              : apiList[i] == "疫情查询" ? `${apiList[i]}城市名`
+                  : apiList[i] == "加群" ? "群名" : apiList[i]
+                  == "网络热词" ? "查梗" : apiList[i]
+      }${i + 1 == leng ? "" : "\n"}`;
     }
     await msg.say(helpStr);
   }
@@ -164,12 +178,14 @@ async function onMessage(msg: Message) {
     if (data.code > 0) {
       await msg.say("请稍候...");
       await msg.say(FileBox.fromFile("./file/3.mp4"));
+      // await msg.say(FileBox.fromUrl(data));
       TiktokVideoPlay = false;
     } else {
       await msg.say(data);
       TiktokVideoPlay = false;
     }
   };
+
 
   // 微视短视频
   if (/^#微视$/.test(msg.text())) {
@@ -204,7 +220,7 @@ async function onMessage(msg: Message) {
   // 全国疫情
   if (/^#疫情查询[\u4E00-\u9FA5\uF900-\uFA2D]{2,3}$/.test(msg.text())) {
     let data: any = await epidemicSituation(encodeURI(msg.text().split("#疫情查询")[1] as string));
-    if (data.location.city == msg.text().split("#疫情查询")[1] && data.cityData.length > 0) {
+    if (data.location.city == msg.text().split("#疫情查询")[1]) {
       let { time, cityData, local } = data, localText = "";
       if (local.data.localDistricts.length > 0) {
         local.data.localDistricts.map((item: any) => {
@@ -247,7 +263,7 @@ async function onMessage(msg: Message) {
       let { riddle, answer, description, type } = data;
       lanternAnswer = `${answer}|${description}`;
       await msg.say(
-        `谜语：${riddle}\n提示：${type}\n回答要带=号\n\n输入#灯谜答案\n即可查看谜底`
+          `谜语：${riddle}\n提示：${type}\n回答要带=号\n\n输入#灯谜答案\n即可查看谜底`
       );
     } else {
       await msg.say(data);
@@ -261,11 +277,54 @@ async function onMessage(msg: Message) {
   if (/^#灯谜答案$/.test(msg.text())) {
     lanternStart = false;
     msg.say(
-      `谜底：${lanternAnswer.split("|")[0]}\n详细描述：${lanternAnswer.split("|")[1]
-      }`
+        `谜底：${lanternAnswer.split("|")[0]}\n详细描述：${lanternAnswer.split("|")[1]
+        }`
     );
   }
+  if (/^#hi /.test(msg.text())) {
+    const text = msg.text().split('#hi ')[1]
+    if (!text) {
+      msg.say('你说啊！')
+    } else if (text === 'tom') {
+      msg.say((await callSBTwo('')) as string)
+    } else {
+      const response = await openai.createCompletion({
+        model: 'text-davinci-003',
+        prompt: text,
+        temperature: 0.5,
+        max_tokens: 512,
+        top_p: 0.3,
+        frequency_penalty: 0.5,
+        presence_penalty: 0.0,
+      })
 
+      if (response.status === 200) {
+        log.info(JSON.stringify(response.data) + '')
+        const resStr = response.data.choices[0].text
+        msg.say(resStr.replace(/^\r|\n/gi, ''))
+      } else {
+        msg.say('额...出错了！')
+      }
+    }
+  }
+
+  // if (/^#img /.test(msg.text())) {
+  //   const text = msg.text().split('#img ')[1]
+  //   if (!text) {
+  //     msg.say('你说啊！')
+  //   } else {
+  //     const response = await openai.createImage({
+  //       prompt: text, // "A cute baby sea otter",
+  //       n: 1,
+  //     })
+  //     log.info(JSON.stringify(response.data) + '')
+  //     if (response.status === 200) {
+  //       for (const item of response.data.data) {
+  //         await msg.say(FileBox.fromUrl(item.url))
+  //       }
+  //     }
+  //   }
+  // }
   // 健康小提示
   if (/^#健康小提示$/.test(msg.text())) {
     let data = await healthyTips();
@@ -308,7 +367,7 @@ async function onMessage(msg: Message) {
 
   // 成语接龙
   async function idiom() {
-    let data: any = await idiomSolitaire({ isStart, word: wordList.length > 0 ? encodeURI(wordList.join(",")) : "" });
+    let data: any = await idiomSolitaire({ isStart, word: "为所欲为" });
     if (data.code == 200) {
       clearInterval(timer);
       timer = null;
@@ -428,7 +487,7 @@ async function onMessage(msg: Message) {
       text += `${index + 1}、${item.cn}\n`;
     });
     text +=
-      "输入格式：#星座数字(空格)日期数字(今：1，明：2，周：3，月：4，年：5)";
+        "输入格式：#星座数字(空格)日期数字(今：1，明：2，周：3，月：4，年：5)";
     msg.say(text);
   }
   if (/^#\d{1,2} \d$/.test(msg.text())) {
@@ -476,24 +535,25 @@ async function onMessage(msg: Message) {
     problem = data;
     answer = true;
     await msg.say(
-      `问题：${(data as any).question}\n#A:${(data as any).answer_a}\n#B:${(data as any).answer_b
-      }\n#C:${(data as any).answer_c}`
+        `问题：${(data as any).question}\n#A:${(data as any).answer_a}\n#B:${(data as any).answer_b
+        }\n#C:${(data as any).answer_c}`
     );
   }
 
   if (/^#[ABCabc]$/.test(msg.text()) && answer && problem) {
     if (
-      (problem as any).answer == msg.text().split("#")[1]?.toLocaleUpperCase()
+        (problem as any).answer == msg.text().split("#")[1]?.toLocaleUpperCase()
     ) {
-      await msg.say(`回答正确\n${(problem as any).analytic}`);
+      await msg.say(`回答正确\n${(problem as any).analytic}奖励一发涩图。`);
+      await msg.say(`#涩图`);
       answer = false;
       problem = null;
       answerList = [];
     } else {
       if (answerList.length == 1) {
         await msg.say(
-          `回答错误,正确答案是${(problem as any).answer},真蠢！\n${(problem as any).analytic
-          }`
+            `回答错误,正确答案是${(problem as any).answer},真蠢！\n${(problem as any).analytic
+            }`
         );
         answer = false;
         problem = null;
@@ -505,12 +565,48 @@ async function onMessage(msg: Message) {
     }
   }
 
+  //   // 涩图
+  if (/^#涩图.*/.test(msg.text())) {
+    let data = await getSeTu(encodeURI(msg.text().split("#涩图")[1]));
+    console.log(data)
+    const imgRex = /<img.*?src="(.*?)"[^>]+>/g;
+    let img;
+    while ((img = imgRex.exec(data))) {
+      await msg.say(FileBox.fromUrl(img[1] as string));
+    }
+
+  }
+
+  // 福瑞
+  if (/^#福瑞$/.test(msg.text())) {
+    let data = await getFuRui();
+    await msg.say(FileBox.fromUrl(data as string));
+  }
+
+  // cos
+  if (/^#cos$/.test(msg.text())) {
+    let data = await getCos();
+    await msg.say(FileBox.fromUrl(data as string));
+  }
+
+  // 女同
+  if (/^#女同$/.test(msg.text())) {
+    let data = await getLesbian();
+    await msg.say(FileBox.fromUrl(data as string));
+  }
+
   // 摸鱼人日历
   if (/^#日历$/.test(msg.text())) {
     let data = await getCalendar();
     await msg.say(FileBox.fromUrl(data as string));
   }
 
+
+  //60s
+  if (/^#60s$/.test(msg.text())) {
+    let data = await getNews();
+    await msg.say(FileBox.fromUrl(data as string));
+  }
   // 绕口令
   if (/^#绕口令$/.test(msg.text())) {
     let data = await tongueTwister("秘钥");
@@ -531,8 +627,8 @@ async function onMessage(msg: Message) {
 
   // 每日天气
   if (
-    /^#天气[\u4E00-\u9FA5\uF900-\uFA2D]{2,}/.test(msg.text()) &&
-    !/^#天气[\u4E00-\u9FA5\uF900-\uFA2D]{2,}周/.test(msg.text())
+      /^#天气[\u4E00-\u9FA5\uF900-\uFA2D]{2,}/.test(msg.text()) &&
+      !/^#天气[\u4E00-\u9FA5\uF900-\uFA2D]{2,}周/.test(msg.text())
   ) {
     let text: any = msg.text().split("#天气")[1];
     if (text.indexOf("周") > -1) {
@@ -555,8 +651,8 @@ async function onMessage(msg: Message) {
       } = data.data[0];
       if (msg.text().indexOf("周") == -1) {
         await msg.say(
-          `今天是${date.split("-")[0]}年${date.split("-")[1]}月${date.split("-")[2]
-          }日，${week}。\n${area}${weather}，当前温度${real}，最高温度${highest}，最低温度${lowest}，${wind}风力${windsc}，紫外线强度${uv_index}级。\n温馨提醒：${tips}`
+            `今天是${date.split("-")[0]}年${date.split("-")[1]}月${date.split("-")[2]
+            }日，${week}。\n${area}${weather}，当前温度${real}，最高温度${highest}，最低温度${lowest}，${wind}风力${windsc}，紫外线强度${uv_index}级。\n温馨提醒：${tips}`
         );
       } else {
         let textStr = "";
@@ -574,8 +670,8 @@ async function onMessage(msg: Message) {
             uv_index
           } = data.data[i];
           textStr += `${date.split("-")[0]}年${date.split("-")[1]}月${date.split("-")[2]
-            }日，${week}\n${area}${weather}，最高温度${highest}，最低温度${lowest}，${wind} 风力${windsc}，紫外线强度${uv_index}级。\n温馨提醒：${tips}${i == leng - 1 ? "" : "\n\n"
-            }`;
+          }日，${week}\n${area}${weather}，最高温度${highest}，最低温度${lowest}，${wind} 风力${windsc}，紫外线强度${uv_index}级。\n温馨提醒：${tips}${i == leng - 1 ? "" : "\n\n"
+          }`;
         }
         await msg.say(textStr);
       }
@@ -591,22 +687,22 @@ async function onMessage(msg: Message) {
   // 发送邮件
   if (/^#发送邮件$/.test(msg.text())) {
     await msg.say(
-      "请输入邮箱地址以及标题和内容,格式：邮箱地址(空格)标题(空格)内容"
+        "请输入邮箱地址以及标题和内容,格式：邮箱地址(空格)标题(空格)内容"
     );
   }
   if (
-    msg.text() != "" &&
-    /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(
-      msg.text().split("</a>")[0]?.split(">")[1] as string
-    )
+      msg.text() != "" &&
+      /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(
+          msg.text().split("</a>")[0]?.split(">")[1] as string
+      )
   ) {
     let text = msg.text().split(" ");
     let data: any = await sendEmails(
-      `adress=${encodeURI(
-        msg.text().split("</a>")[0]?.split(">")[1] as string
-      )}&title=${encodeURI(text[3] as string)}&content=${encodeURI(
-        text[4] as string
-      )}`
+        `adress=${encodeURI(
+            msg.text().split("</a>")[0]?.split(">")[1] as string
+        )}&title=${encodeURI(text[3] as string)}&content=${encodeURI(
+            text[4] as string
+        )}`
     );
     let res = JSON.parse(data);
     if (res.Code == 1) {
@@ -655,9 +751,9 @@ async function onMessage(msg: Message) {
 
   // 修改群名
   if (
-    room &&
-    room?.payload?.topic == "群名" &&
-    /^修改群名/.test(msg.text())
+      room &&
+      room?.payload?.topic == "群名" &&
+      /^修改群名/.test(msg.text())
   ) {
     await room.topic(msg.text().split("修改群名")[1] as string);
   }
@@ -742,6 +838,6 @@ bot.on("room-join", onRoomJoin);
 bot.on("friendship", onFriendship);
 
 bot
-  .start()
-  .then(() => log.info("启动机器人", "启动成功"))
-  .catch((e) => log.error("启动失败", e));
+    .start()
+    .then(() => log.info("启动机器人", "启动成功"))
+    .catch((e) => log.error("启动失败", e));
