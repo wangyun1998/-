@@ -3,7 +3,7 @@ import "dotenv/config.js";
 import { Contact, Message, ScanStatus, WechatyBuilder, log } from "wechaty";
 
 import qrcodeTerminal from "qrcode-terminal";
-import { Configuration, OpenAIApi } from 'openai/dist'
+import { Configuration, OpenAIApi } from 'openai'
 
 import { FileBox } from "file-box";
 
@@ -41,7 +41,6 @@ import {
   obsceneRemarks,
   microtiaVideo,
   TiktokVideo,
-  getVideo
 } from "./txApi.js";
 
 const configuration = new Configuration({
