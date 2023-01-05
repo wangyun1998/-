@@ -184,7 +184,7 @@ const getSeTu = function (keyword: string) {
   return new Promise<any>((resolve, _reject) => {
     const randomIndex = Math.floor(Math.random() * 600) + 1;
     const page = Math.ceil(randomIndex / 10);
-    const index = randomIndex % 10;
+    // const index = randomIndex % 10;
     console.log(`https://yingtall.com/wp-json/wp/v2/posts?page=${keyword ? 1 : page}${keyword ? `&search=${keyword}` : ''}`)
     request.get(
       `https://yingtall.com/wp-json/wp/v2/posts?page=${keyword ? 1 : page}${keyword ? `&search=${keyword}` : ''}`,
@@ -198,6 +198,8 @@ const getSeTu = function (keyword: string) {
             resolve("额。没有探索到，换个姿势再来一次吧～");
             return;
           }
+          const index = random(1,resJsonData.length-1)
+          // const index = resJsonData.length % 10 -1
           const content = resJsonData[index].content;
           if (!content || !content.rendered) {
             resolve("额。没有探索到，换个姿势再来一次吧～");
@@ -209,6 +211,7 @@ const getSeTu = function (keyword: string) {
     );
   });
 };
+
 // 福瑞
 const getFuRui = function () {
   return new Promise((resolve, _reject) => {
@@ -705,7 +708,9 @@ const TiktokVideo = function () {
     );
   });
 };
-
+export function random(start: number = 0, end: number = 1): number {
+  return (Math.random() * (end - start + 1) + start) | 0;
+}
 export {
   getSeTu,
   getFuRui,
