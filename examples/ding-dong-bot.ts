@@ -571,6 +571,10 @@ async function onMessage(msg: Message) {
     let data = await getSeTu(encodeURI(msg.text().split("#涩图")[1]!));
     console.log(data)
     const imgRex = /<img.*?src="(.*?)"[^>]+>/g;
+    if(!imgRex.exec(data)) {
+      await msg.say(data);
+      return;
+    }
     let img;
     while ((img = imgRex.exec(data))) {
       await msg.say(FileBox.fromUrl(img[1] as string));
