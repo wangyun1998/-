@@ -42,6 +42,29 @@ import {
   microtiaVideo,
   TiktokVideo,
 } from "./txApi.js";
+import type { Entity } from "./ws.js";
+import Client from "./ws.js";
+import { Snowflake } from "./snowflake";
+
+let botMsg: Message | null = null
+const cb = (ctx: Entity) => {
+  switch (ctx.fun) {
+    case 'zhihu':
+      botMsg?.say(FileBox.fromDataURL(ctx.data, new Snowflake(6n, 7n).nextId().toString() + '.png'))
+      break;
+    case 'error':
+      break
+    default:
+      break;
+  }
+};
+
+let client = Client(cb);
+
+
+function getUrls(str: string) {
+  return str.match(/(https?|http):\/\/[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]/g)
+}
 
 const configuration = new Configuration({
   apiKey: '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',
@@ -162,6 +185,28 @@ async function onMessage(msg: Message) {
     await msg.say(helpStr);
   }
 
+
+
+  // zhihu
+  if (msg.text().includes('知乎')) {
+    botMsg = msg
+    let urls = getUrls(msg.text())
+    console.log(urls);
+    if (urls?.[0] && urls?.[0].startsWith('https://www.zhihu.com') && urls?.[0].includes('question') && urls?.[0].includes('answer')) {
+      try {
+        console.log(urls?.[0]);
+        client.send({
+          fun: 'zhihu',
+          data: urls?.[0]
+        })
+      } catch (error) {
+        msg.say('ws连接异常捏')
+      }
+    } else {
+      msg.say('url 不对捏')
+    }
+  }
+
   // 查梗
   if (/^#查梗.+/.test(msg.text())) {
     let data = await hotWords(encodeURI(msg.text().split("#查梗")[1]!));
@@ -251,11 +296,11 @@ async function onMessage(msg: Message) {
     }
   };
 
-  // 彩虹屁
-  if (msg.text().indexOf("夸") > -1 && !msg.self()) {
-    let data = await rainbowFart();
-    await msg.say(data as string);
-  }
+  // // 彩虹屁
+  // if (msg.text().indexOf("夸") > -1 && !msg.self()) {
+  //   let data = await rainbowFart();
+  //   await msg.say(data as string);
+  // }
 
   // 猜灯谜
   if (/^#猜灯谜$/.test(msg.text())) {
@@ -571,7 +616,7 @@ async function onMessage(msg: Message) {
     let data = await getSeTu(encodeURI(msg.text().split("#涩图")[1]!));
     console.log(data)
     const imgRex = /<img.*?src="(.*?)"[^>]+>/g;
-    if(!imgRex.exec(data)) {
+    if (!imgRex.exec(data)) {
       await msg.say(data);
       return;
     }
@@ -846,3 +891,5 @@ bot
   .start()
   .then(() => log.info("启动机器人", "启动成功"))
   .catch((e) => log.error("启动失败", e));
+
+
